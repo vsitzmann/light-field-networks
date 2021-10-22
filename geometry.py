@@ -1,3 +1,5 @@
+'''For general notes on Plucker coordinates:
+https://faculty.sites.iastate.edu/jia/files/inline-files/plucker-coordinates.pdf'''
 import numpy as np
 import torch
 
@@ -10,6 +12,10 @@ def get_ray_origin(cam2world):
 
 
 def plucker_embedding(cam2world, uv, intrinsics):
+    '''Computes the plucker coordinates from batched cam2world & intrinsics matrices, as well as pixel coordinates
+    cam2world: (b, 4, 4)
+    intrinsics: (b, 4, 4)
+    uv: (b, n, 2)'''
     ray_dirs = get_ray_directions(uv, cam2world=cam2world, intrinsics=intrinsics)
     cam_pos = get_ray_origin(cam2world)
     cam_pos = cam_pos[..., None, :].expand(list(uv.shape[:-1]) + [3])
@@ -22,12 +28,15 @@ def plucker_embedding(cam2world, uv, intrinsics):
 
 
 def closest_to_origin(plucker_coord):
+    '''Computes the point on a plucker line closest to the origin.'''
     direction = plucker_coord[..., :3]
     moment = plucker_coord[..., 3:]
     return torch.cross(direction, moment, dim=-1)
 
 
 def plucker_sd(plucker_coord, point_coord):
+    '''Computes the signed distance of a point on a line to the point closest to the origin
+    (like a local coordinate system on a plucker line)'''
     # Get closest point to origin along plucker line.
     plucker_origin = closest_to_origin(plucker_coord)
 
@@ -48,11 +57,14 @@ def get_relative_rotation_matrix(vector_1, vector_2):
 
 
 def plucker_reciprocal_product(line_1, line_2):
+    '''Computes the reciprocal product between plucker coordinates. See:
+    https://faculty.sites.iastate.edu/jia/files/inline-files/plucker-coordinates.pdf'''
     return torch.einsum('...j,...j', line_1[..., :3], line_2[..., 3:]) + \
            torch.einsum('...j,...j', line_2[..., :3], line_1[..., 3:])
 
 
 def plucker_distance(line_1, line_2):
+    '''Computes the distance between the two closest points on lines parameterized as plucker coordinates.'''
     line_1_dir, line_2_dir = torch.broadcast_tensors(line_1[..., :3], line_2[..., :3])
     direction_cross = torch.cross(line_1_dir, line_2_dir, dim=-1)
     # https://web.cs.iastate.edu/~cs577/handouts/plucker-coordinates.pdf
@@ -171,6 +183,7 @@ def project_point_on_line(projection_point, line_direction, point_on_line):
     dot = torch.einsum('...j,...j', projection_point-point_on_line, line_direction)
     return point_on_line + dot[..., None] * line_direction
 
+
 def get_ray_directions(xy, cam2world, intrinsics):
     z_cam = torch.ones(xy.shape[:-1]).to(xy.device)
     pixel_points = world_from_xy_depth(xy, z_cam, intrinsics=intrinsics, cam2world=cam2world)  # (batch, num_samples, 3)
@@ -205,99 +218,3 @@ def ray_sphere_intersect(ray_origin, ray_dir, sphere_center=None, radius=1):
     t0 = - ray_dir_dot_origin + discrim
     t1 = - ray_dir_dot_origin - discrim
     return ray_origin + t0*ray_dir, ray_origin + t1*ray_dir
-
-
-def to_sphere(u, v):
-    theta = 2 * np.pi * u
-    phi = torch.acos(1 - 2 * v)
-    cx = torch.sin(phi) * torch.cos(theta)
-    cy = torch.sin(phi) * torch.sin(theta)
-    cz = torch.cos(phi)
-    s = torch.stack([cx, cy, cz], dim=-1)
-    return s
-
-
-def polar_to_cartesian(r, theta, phi, deg=True):
-    if deg:
-        phi = phi * np.pi / 180
-        theta = theta * np.pi / 180
-    cx = np.sin(phi) * np.cos(theta)
-    cy = np.sin(phi) * np.sin(theta)
-    cz = np.cos(phi)
-    return r * np.stack([cx, cy, cz])
-
-
-def to_uv(loc):
-    # normalize to unit sphere
-    loc = loc / loc.norm(dim=1, keepdim=True)
-
-    cx, cy, cz = loc.t()
-    v = (1 - cz) / 2
-
-    phi = torch.acos(cz)
-    sin_phi = torch.sin(phi)
-
-    # ensure we do not divide by zero
-    eps = 1e-8
-    sin_phi[sin_phi.abs() < eps] = eps
-
-    theta = torch.acos(cx / sin_phi)
-
-    # check for sign of phi
-    cx_rec = sin_phi * torch.cos(theta)
-    if not np.isclose(cx.numpy(), cx_rec.numpy(), atol=1e-5).all():
-        sin_phi = -sin_phi
-
-    # check for sign of theta
-    cy_rec = sin_phi * torch.sin(theta)
-    if not np.isclose(cy.numpy(), cy_rec.numpy(), atol=1e-5).all():
-        theta = -theta
-
-    u = theta / (2 * np.pi)
-    assert np.isclose(to_sphere(u, v).detach().cpu().numpy(), loc.t().detach().cpu().numpy(), atol=1e-5).all()
-
-    return u, v
-
-
-def to_phi(u):
-    return 360 * u  # 2*pi*u*180/pi
-
-
-def to_theta(v):
-    return np.arccos(1 - 2 * v) * 180. / np.pi
-
-
-def sample_on_sphere(size, range_u=(0, 1), range_v=(0, 1)):
-    u = torch.zeros(size).uniform_(*range_u)
-    v = torch.zeros(size).uniform_(*range_v)
-    return to_sphere(u, v)
-
-
-def look_at(eye, at=torch.Tensor([0, 0, 0]), up=torch.Tensor([0, 0, 1]), eps=1e-5):
-    at = at.unsqueeze(0).unsqueeze(0)
-    up = up.unsqueeze(0).unsqueeze(0)
-
-    z_axis = eye - at
-    z_axis /= z_axis.norm(dim=-1, keepdim=True) + eps
-
-    up = up.expand(z_axis.shape)
-    x_axis = torch.cross(up, z_axis)
-    x_axis /= x_axis.norm(dim=-1, keepdim=True) + eps
-
-    y_axis = torch.cross(z_axis, x_axis)
-    y_axis /= y_axis.norm(dim=-1, keepdim=True) + eps
-
-    r_mat = torch.stack((x_axis, y_axis, z_axis), axis=-1)
-    return r_mat
-
-
-def homogenize_mat(mat):
-    hom = torch.Tensor([0., 0., 0., 1.])
-
-    while len(hom.shape) < len(mat.shape):
-        hom = hom.unsqueeze(0)
-
-    hom = hom.expand(mat.shape)
-    return torch.cat((mat, hom), dim=-2)
-
-

@@ -1,22 +1,17 @@
 '''Implements a generic training loop.
 '''
 
-from torch.cuda.amp import autocast
 import os
 import shutil
-import time
 from collections import defaultdict
 
 import numpy as np
-import diff_operators
 import torch
 import torch.distributed as dist
 from torch.utils.tensorboard import SummaryWriter
-# from tqdm.autonotebook import tqdm
 from tqdm import tqdm
 
 import util
-import loss_functions
 
 
 def average_gradients(model):
