@@ -38,10 +38,7 @@ class LightFieldModel(nn.Module):
                 self.phi = custom_layers.FCBlock(hidden_ch=self.num_hidden_units_phi, num_hidden_layers=6,
                                                  in_features=6, out_features=out_channels, outermost_linear=True, norm='layernorm_na')
             elif network == 'siren':
-                # if self.fit_single:
                 omega_0 = 30.
-                # else:
-                #     omega_0 = 1.
                 self.phi = custom_layers.Siren(in_features=6, hidden_features=256, hidden_layers=8,
                                                out_features=out_channels, outermost_linear=True, hidden_omega_0=omega_0,
                                                first_omega_0=omega_0)

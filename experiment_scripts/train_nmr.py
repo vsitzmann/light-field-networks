@@ -1,8 +1,3 @@
-"""
-checkpoint (*WITH SOFTRAS SPLIT*) under 
-/om2/user/sitzmann/logs/light_fields/NMR_hyper_1e2_reg_layernorm/64_256_None/checkpoints/model_epoch_0087_iter_250000.pth
-"""
-
 # Enable import from parent package
 import sys
 import os
@@ -27,11 +22,11 @@ p = configargparse.ArgumentParser()
 p.add('-c', '--config_filepath', required=False, is_config_file=True)
 
 p.add_argument('--logging_root', type=str, default=config.logging_root)
-p.add_argument('--data_root', type=str, default='/om2/user/egger/MultiClassSRN/data/NMR_Dataset', required=False)
+p.add_argument('--data_root', type=str, required=True)
 p.add_argument('--val_root', type=str, default=None, required=False)
 p.add_argument('--network', type=str, default='relu')
 p.add_argument('--conditioning', type=str, default='hyper')
-p.add_argument('--experiment_name', type=str, required=True)
+p.add_argument('--experiment_name', type=str, default='nmr', required=False)
 p.add_argument('--num_context', type=int, default=0)
 p.add_argument('--batch_size', type=int, default=128)
 p.add_argument('--max_num_instances', type=int, default=None)
@@ -41,7 +36,6 @@ p.add_argument('--gpus', type=int, default=1)
 # General training options
 p.add_argument('--lr', type=float, default=1e-4)
 p.add_argument('--num_epochs', type=int, default=40001)
-p.add_argument('--reconstruct', action='store_true', default=False)
 p.add_argument('--epochs_til_ckpt', type=int, default=10)
 p.add_argument('--steps_til_summary', type=int, default=5000)
 p.add_argument('--iters_til_ckpt', type=int, default=10000)
@@ -98,12 +92,6 @@ def multigpu_train(gpu, opt, cache):
     root_path = os.path.join(opt.logging_root, opt.experiment_name)
     loss_fn = val_loss_fn = loss_functions.LFLoss(1)
 
-    if opt.reconstruct:
-        model_params = [(name, param) for name, param in model.named_parameters() if 'latent_codes' in name]
-        optimizers = [torch.optim.Adam(lr=opt.lr, params=[p for _, p in model_params])]
-    else:
-        optimizers = None
-
     training.multiscale_training(model=model, dataloader_callback=create_dataloader_callback,
                                  dataloader_iters=(1000000, ), dataloader_params=((64, opt.batch_size, None), ),
                                  epochs=opt.num_epochs, lr=opt.lr, steps_til_summary=opt.steps_til_summary,
@@ -111,7 +99,6 @@ def multigpu_train(gpu, opt, cache):
                                  model_dir=root_path, loss_fn=loss_fn, val_loss_fn=val_loss_fn,
                                  iters_til_checkpoint=opt.iters_til_ckpt, summary_fn=summary_fn,
                                  overwrite=True,
-                                 optimizers=optimizers,
                                  rank=gpu, train_function=training.train, gpus=opt.gpus)
 
 if __name__ == "__main__":

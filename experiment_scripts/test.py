@@ -1,6 +1,6 @@
 """
 Double-checked that softras split was used via (and by switching "dataset_type" to train).
-python test_lf_space.py --experiment_name=nmr_dummy --checkpoint_path=/om2/user/sitzmann/logs/light_fields/NMR_hyper_1e2_reg_layernorm/64_256_None/checkpoints/model_epoch_0087_iter_250000.pth --data_root=/om2/user/egger/MultiClassSRN/data/NMR_Dataset --max_num_instances=10 --dataset=NMR
+python test.py --experiment_name=nmr_dummy --checkpoint_path=/om2/user/sitzmann/logs/light_fields/NMR_hyper_1e2_reg_layernorm/64_256_None/checkpoints/model_epoch_0087_iter_250000.pth --data_root=/om2/user/egger/MultiClassSRN/data/NMR_Dataset --max_num_instances=10 --dataset=NMR
 Then also checked that the reconstruction checkpoint (nmr_rec) and the final checkpoint from this run had the same parameters (which they did). So, false alarm!
 """
 # Enable import from parent package
@@ -39,7 +39,6 @@ p.add_argument('--conditioning', type=str, default='hyper')
 p.add_argument('--max_num_instances', type=int, default=None)
 p.add_argument('--save_out_first_n', type=int, default=100, help='Only saves images of first n object instances.')
 p.add_argument('--img_sidelength', type=int, default=64, required=False)
-p.add_argument('--spec_observation_idcs', type=str, default=None, required=False)
 p.add_argument('--viewlist', type=str, default=None, required=False)
 
 opt = p.parse_args()
@@ -54,11 +53,6 @@ if opt.viewlist is not None:
         x[0] + "/" + x[1]: list(map(int, x[2:]))
         for x in tmp
     }
-
-if opt.spec_observation_idcs is not None:
-    specific_observation_idcs = util.parse_comma_separated_integers(opt.spec_observation_idcs)
-else:
-    specific_observation_idcs = None
 
 model = models.LFAutoDecoder(num_instances=num_instances, latent_dim=256, parameterization='plucker', network=opt.network,
                              conditioning=opt.conditioning).cuda()

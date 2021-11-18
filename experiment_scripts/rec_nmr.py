@@ -1,7 +1,3 @@
-'''
-python rec_multiclass.py --experiment_name=nmr_single_shot_random --num_shot=1 \
---checkpoint_path=/nobackup/users/sitzmann/logs/light_fields/NMR_cntd_cntd/64_300_None/checkpoints/model_epoch_0004_iter_010000.pth
-'''
 # Enable import from parent package
 import sys
 import os
@@ -27,8 +23,9 @@ p = configargparse.ArgumentParser()
 p.add('-c', '--config_filepath', required=False, is_config_file=True)
 
 p.add_argument('--logging_root', type=str, default=config.logging_root)
-p.add_argument('--data_root', type=str, default='/nobackup/users/sitzmann/NMR_Dataset', required=False)
-p.add_argument('--experiment_name', type=str, required=True)
+p.add_argument('--data_root', type=str, required=True)
+p.add_argument('--experiment_name', type=str, default='nmr_rec', required=False)
+p.add_argument('--viewlist', type=str, default='./experiment_scripts/viewlists/src_dvr.txt')
 p.add_argument('--max_num_instances', type=int, default=None)
 p.add_argument('--gpus', type=int, default=1)
 p.add_argument('--checkpoint_path', required=True)
@@ -39,7 +36,6 @@ p.add_argument('--epochs_til_ckpt', type=int, default=100)
 p.add_argument('--steps_til_summary', type=int, default=100)
 p.add_argument('--iters_til_ckpt', type=int, default=10000)
 p.add_argument('--spec_observation_idcs', type=str, default=None)
-p.add_argument('--viewlist', type=str, default=None)
 opt = p.parse_args()
 
 

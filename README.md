@@ -1,5 +1,5 @@
 # Light Field Networks
-### [Project Page](https://vsitzmann.github.io/lfns) | [Paper](https://arxiv.org/abs/2106.02634) 
+### [Project Page](https://vsitzmann.github.io/lfns) | [Paper](https://arxiv.org/abs/2106.02634)  | [Data](https://drive.google.com/drive/folders/15u6WD0zSBXzu8jZBF-Sn5n01F2HSxFCp?usp=sharing) | [Pretrained Models](https://drive.google.com/drive/folders/15u6WD0zSBXzu8jZBF-Sn5n01F2HSxFCp?usp=sharing)
 [![Explore LFNs in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/vsitzmann/light-field-networks/blob/master/Light_Field_Networks.ipynb)<br>
 
 [Vincent Sitzmann](https://vsitzmann.github.io/)\*,
@@ -11,15 +11,15 @@ MIT, \*denotes equal contribution
 
 This is the official implementation of the paper "Light Field Networks: Neural Scene Representations with Single-Evaluation Rendering".
 
-[![lfns_video](https://img.youtube.com/vi/Q2fLWGBeaiI/0.jpg)](https://www.youtube.com/watch?v=x3sSreTNFw4&feature=emb_imp_woyt)
+[![lfns_video](https://img.youtube.com/vi/x3sSreTNFw4/0.jpg)](https://www.youtube.com/watch?v=x3sSreTNFw4&feature=emb_imp_woyt)
 
 
 ## Google Colab
-If you want to experiment with Siren, we have written a [Colab](https://colab.research.google.com/github/vsitzmann/light-field-networks/blob/master/Light_Field_Networks.ipynb).
+If you want to experiment with Light Field Networks, I have written a 
+[Colab](https://colab.research.google.com/github/vsitzmann/light-field-networks/blob/master/Light_Field_Networks.ipynb).
 It's quite comprehensive and comes with a no-frills, drop-in implementation of LFNs. It doesn't require
 installing anything, and goes through the following experiments:
-* Overfitting an LFN to a single, photorealistic 3D scene
-* Learning a multi-view consistency prior
+* Overfitting an LFN to a single, photorealistic 3D scene using [SIREN](https://colab.research.google.com/github/vsitzmann/siren/blob/master/explore_siren.ipynb)
 
 ## Get started
 You can set up a conda environment with all dependencies like so:
@@ -30,31 +30,67 @@ conda activate siren
 
 ## High-Level structure
 The code is organized as follows:
-* multiclass_dataio.py loads training and testing data for the NMR experiments.
+* multiclass_dataio.py and dataio.py contain the dataio for mutliclass- and single-class experiments respectively.
+* models.py contains the code for light field networks.  
 * training.py contains a generic training routine.
 * ./experiment_scripts/ contains scripts to reproduce experiments in the paper.
 
 ## Reproducing experiments
 The directory `experiment_scripts` contains one script per experiment in the paper.
 
-To monitor progress, the training code writes tensorboard summaries into a "summaries"" subdirectory in the logging_root.
+train_single_class.py trains a model on classes in the Scene Representation Networks format, such as cars or chairs.
+Note that since these datasets have a resolution of 128, this model starts with a lower resolution (64) and then 
+increases the resolution to 128 (see line 43 in the script).
 
-### Rendering your own datasets
-I have put together a few scripts for the Blender python interface that make it easy to render your own dataset. Please find them [here](https://github.com/vsitzmann/shapenet_renderer/blob/master/shapenet_spherical_renderer.py).
+train_nmr.py trains a model on the NMR dataset. An example call is:
+
+```
+python experiment_scripts/train_nmr.py --data_root=path_to_nmr_dataset
+python experiment_scripts/train_single_class.py --data_root=path_to_single_class
+```
+
+To reconstruct test objects, use the scripts "rec_single_class.py" and "rec_nmr.py". In addition to the data root,
+you have to point these scripts to the checkpoint from the training run. Note that the rec_nmr.py script uses the viewlist
+under ./experiment_scripts/viewlists/src_dvr.txt to pick which views to reconstruct the objects from, while rec_single_class.py
+per default reconstructs from the view with index 64.
+
+```
+python experiment_scripts/rec_nmr.py --data_root=path_to_nmr_dataset --checkpoint=path_to_training_checkpoint
+python experiment_scripts/rec_single_class.py --data_root=path_to_single_class_TEST_SET --checkpoint=path_to_training_checkpoint
+```
+
+Finally, you may test the models on the test set with the test.py script. This script is used for testing all the models. 
+You have to pass it as a parameter which dataset you are reconstructing ("NMR" or no). For the NMR dataset, you need
+to pass the "viewlist" again to make sure that the model is not evaluated on the context view.
+
+```
+python experiment_scripts/test.py --data_root=path_to_nmr_dataset --dataset=NMR --checkpoint=path_to_rec_checkpoint
+python experiment_scripts/test.py --data_root=path_to_single_class_TEST_SET --dataset=single --checkpoint=path_to_rec_checkpoint
+```
+
+To monitor progress, both the training and reconstruction scripts write tensorboard summaries into a "summaries" subdirectory in the logging_root.
+
+## Bells & whistles
+This code has a bunch of options that were not discussed in the paper.
+- switch between a ReLU network and a SIREN to better fit high-frequency content with the flag --network (see the __init__ of model.py for options).
+- switch between a hypernetwork, conditioning via concatenation, and low-rank concditioning with the flag --conditioning
+- there is an implementation of encoder-based inference in models.py (LFEncoder) which uses a ResNet18 with global conditioning
+ to generate the latent codes z.
+
+## Data
+We use two types of datasets: class-specific ones and multi-class ones. 
+
+- The class-specific ones are loaded via dataio.py, and we provide them in a fast-to-load hdf5 format in our 
+  [google drive](https://drive.google.com/drive/folders/15u6WD0zSBXzu8jZBF-Sn5n01F2HSxFCp?usp=sharing).
+- For the multiclass experiment, we use the ShapeNet 64x64 dataset from NMR 
+  [https://s3.eu-central-1.amazonaws.com/avg-projects/differentiable_volumetric_rendering/data/NMR_Dataset.zip](https://s3.eu-central-1.amazonaws.com/avg-projects/differentiable_volumetric_rendering/data/NMR_Dataset.zip) 
+  (Hosted by DVR authors). Additionally, you will need to place the 
+  [intrinsics.txt file that you can find in the google drive](https://drive.google.com/file/d/1dQAY59d7_vIXO-xEhC9uaXUM_hKVKOVy/view?usp=sharing) in the nmr root directory.
 
 ### Coordinate and camera parameter conventions
 This code uses an "OpenCV" style camera coordinate system, where the Y-axis points downwards (the up-vector points in the negative Y-direction), 
 the X-axis points right, and the Z-axis points into the image plane. Camera poses are assumed to be in a "camera2world" format,
 i.e., they denote the matrix transform that transforms camera coordinates to world coordinates.
-
-The code also reads an "intrinsics.txt" file from the dataset directory. This file is expected to be structured as follows (unnamed constants are unused):
-```
-f cx cy 0.
-0. 0. 0.
-1.
-img_height img_width
-```
-The focal length, cx and cy are in pixels. Height and width are the resolution of the image.
 
 ## Misc
 ### Citation

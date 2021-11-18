@@ -142,6 +142,51 @@ def lin2img(tensor, image_resolution=None, mode='torch'):
     return tensor
 
 
+def light_field_depth_map(plucker_coords, cam2world, light_field_fn):
+    x = geometry.get_ray_origin(cam2world)
+    D = 1
+    x_prim = x + D * plucker_coords[..., :3]
+
+    d_prim = torch.normal(torch.zeros_like(plucker_coords[..., :3]), torch.ones_like(plucker_coords[..., :3])).to(
+        plucker_coords.device)
+    d_prim = F.normalize(d_prim, dim=-1)
+
+    dcdsts = []
+    for i in range(5):
+        st = ((torch.rand_like(plucker_coords[..., :2]) - 0.5) * 1e-2).requires_grad_(True).to(plucker_coords.device)
+        a = x + st[..., :1] * d_prim
+        b = x_prim + st[..., 1:] * d_prim
+
+        v_dir = b - a
+        v_mom = torch.cross(a, b, dim=-1)
+        v_norm = torch.cat((v_dir, v_mom), dim=-1) / v_dir.norm(dim=-1, keepdim=True)
+
+        with torch.enable_grad():
+            c = light_field_fn(v_norm)
+            dcdst = diff_operators.gradient(c, st, create_graph=False)
+            dcdsts.append(dcdst)
+            del dcdst
+            del c
+
+    dcdsts = torch.stack(dcdsts, dim=0)
+
+    dcdt = dcdsts[0, ..., 1:]
+    dcds = dcdsts[0, ..., :1]
+
+    all_depth_estimates = D * dcdsts[..., 1:] / (dcdsts.sum(dim=-1, keepdim=True))
+    all_depth_estimates[torch.abs(dcdsts.sum(dim=-1)) < 5] = 0
+    all_depth_estimates[all_depth_estimates<0] = 0.
+
+    dcdsts_var = torch.std(dcdsts.norm(dim=-1, keepdim=True), dim=0, keepdim=True)
+    depth_var = torch.std(all_depth_estimates, dim=0, keepdim=True)
+
+    d = D * dcdt / (dcds + dcdt)
+    d[torch.abs(dcds + dcdt) < 5] = 0.
+    d[d<0] = 0.
+    d[depth_var[0, ..., 0] > 0.01] = 0.
+    return {'depth':d, 'points':x + d * plucker_coords[..., :3]}
+
+
 def pick(list, item_idcs):
     if not list:
         return list
