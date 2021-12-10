@@ -1,6 +1,5 @@
 # Light Field Networks
 ### [Project Page](https://vsitzmann.github.io/lfns) | [Paper](https://arxiv.org/abs/2106.02634)  | [Data](https://drive.google.com/drive/folders/15u6WD0zSBXzu8jZBF-Sn5n01F2HSxFCp?usp=sharing) | [Pretrained Models](https://drive.google.com/drive/folders/15u6WD0zSBXzu8jZBF-Sn5n01F2HSxFCp?usp=sharing)
-[![Explore LFNs in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/vsitzmann/light-field-networks/blob/master/Light_Field_Networks.ipynb)<br>
 
 [Vincent Sitzmann](https://vsitzmann.github.io/)\*,
 [Semon Rezchikov](https://math.columbia.edu/~skr/)\*,
@@ -13,13 +12,6 @@ This is the official implementation of the paper "Light Field Networks: Neural S
 
 [![lfns_video](https://img.youtube.com/vi/x3sSreTNFw4/0.jpg)](https://www.youtube.com/watch?v=x3sSreTNFw4&feature=emb_imp_woyt)
 
-
-## Google Colab
-If you want to experiment with Light Field Networks, I have written a 
-[Colab](https://colab.research.google.com/github/vsitzmann/light-field-networks/blob/master/Light_Field_Networks.ipynb).
-It's quite comprehensive and comes with a no-frills, drop-in implementation of LFNs. It doesn't require
-installing anything, and goes through the following experiments:
-* Overfitting an LFN to a single, photorealistic 3D scene using [SIREN](https://colab.research.google.com/github/vsitzmann/siren/blob/master/explore_siren.ipynb)
 
 ## Get started
 You can set up a conda environment with all dependencies like so:
