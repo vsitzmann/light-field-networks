@@ -56,3 +56,5 @@ def img_summaries(model, model_input, ground_truth, loss_summaries, model_output
                                                      scale_each=True,
                                                      normalize=True).cpu().detach().numpy(),
                          iter)
+        
+        

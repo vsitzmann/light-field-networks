@@ -15,7 +15,7 @@ import training
 import configargparse
 from torch.utils.data import DataLoader
 import loss_functions
-import summaries
+import summaries_srn
 import config
 
 p = configargparse.ArgumentParser()
