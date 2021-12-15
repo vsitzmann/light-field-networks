@@ -21,6 +21,7 @@ import config
 p = configargparse.ArgumentParser()
 p.add('-c', '--config_filepath', required=False, is_config_file=True)
 
+p.add_argument('--inference_type', type=str, default='autodecoder')
 p.add_argument('--logging_root', type=str, default=config.logging_root)
 p.add_argument('--data_root', type=str, required=True)
 p.add_argument('--val_root', type=str, default=None, required=False)
@@ -55,11 +56,18 @@ def multigpu_train(gpu, opt, cache):
     torch.cuda.set_device(gpu)
 
     def create_dataloader_callback(sidelength, batch_size, query_sparsity):
-        train_dataset = multiclass_dataio.SceneClassDataset(num_context=1, num_trgt=opt.num_trgt,
-                                                            root_dir=opt.data_root, query_sparsity=query_sparsity,
-                                                            img_sidelength=sidelength, vary_context_number=True, cache=cache,
-                                                            max_num_instances=opt.max_num_instances,
-                                                            dataset_type='train')
+        if opt.inference_type == 'autodecoder':
+            train_dataset = multiclass_dataio.SceneClassDataset(num_context=0, num_trgt=opt.num_trgt,
+                                                                root_dir=opt.data_root, query_sparsity=query_sparsity,
+                                                                img_sidelength=sidelength, vary_context_number=True, cache=cache,
+                                                                max_num_instances=opt.max_num_instances,
+                                                                dataset_type='train')
+        elif opt.inference_type == 'amortized':
+            train_dataset = multiclass_dataio.SceneClassDataset(num_context=1, num_trgt=opt.num_trgt,
+                                                                root_dir=opt.data_root, query_sparsity=query_sparsity,
+                                                                img_sidelength=sidelength, vary_context_number=True, cache=cache,
+                                                                max_num_instances=opt.max_num_instances,
+                                                                dataset_type='train')
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
                                   drop_last=True, num_workers=0)
 
@@ -73,8 +81,12 @@ def multigpu_train(gpu, opt, cache):
         return train_loader
     
     num_instances = multiclass_dataio.get_num_instances(opt.data_root, 'train')
-    model = models_srn.SRNEncoder(latent_dim=256, num_instances=num_instances,
-                                 network=opt.network, conditioning=opt.conditioning).cuda()
+    if opt.inference_type == 'autodecoder':
+        model = models_srn.SRNAutoDecoder(latent_dim=256, num_instances=num_instances,
+                                     network=opt.network, conditioning=opt.conditioning).cuda()
+    if opt.inference_type == 'amortized':
+        model = models_srn.SRNEncoder(latent_dim=256, num_instances=num_instances,
+                                          network=opt.network, conditioning=opt.conditioning).cuda()
 
     if opt.checkpoint_path is not None:
         print(f"Loading weights from {opt.checkpoint_path}...")
@@ -85,7 +97,7 @@ def multigpu_train(gpu, opt, cache):
         sync_model(model)
 
     # Define the loss
-    summary_fn = summaries.img_summaries
+    summary_fn = summaries_srn.img_summaries
     root_path = os.path.join(opt.logging_root, opt.experiment_name)
     loss_fn = val_loss_fn = loss_functions.LFLoss(1)
 
