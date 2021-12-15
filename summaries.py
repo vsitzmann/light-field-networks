@@ -10,9 +10,14 @@ def img_summaries(model, model_input, ground_truth, loss_summaries, model_output
     predictions = model_output['rgb']
     trgt_imgs = ground_truth['rgb']
     indices = model_input['query']['instance_idx']
+    depth = model_output['depth']
+    normal = model_output['normals']
 
     predictions = util.flatten_first_two(predictions)
     trgt_imgs = util.flatten_first_two(trgt_imgs)
+    normal = util.flatten_first_two(normal)
+    depth = util.flatten_first_two(depth)
+
 
     with torch.no_grad():
         if 'context' in model_input and model_input['context']:
@@ -37,3 +42,19 @@ def img_summaries(model, model_input, ground_truth, loss_summaries, model_output
 
         writer.add_scalar(prefix + "idx_min", indices.min(), iter)
         writer.add_scalar(prefix + "idx_max", indices.max(), iter)
+        
+        depth_maps_plot = util.lin2img(depth)
+        writer.add_image(prefix + "pred_depth",
+                         torchvision.utils.make_grid(depth_maps_plot.repeat(1, 3, 1, 1),
+                                                     scale_each=True,
+                                                     normalize=True).cpu().detach().numpy(),
+                         iter)
+        
+        normal_plot = util.lin2img(normal.permute(0, -1, 1))
+        writer.add_image(prefix + "pred_normals",
+                         torchvision.utils.make_grid(normal,
+                                                     scale_each=True,
+                                                     normalize=True).cpu().detach().numpy(),
+                         iter)
+        
+        

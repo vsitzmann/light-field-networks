@@ -1,4 +1,4 @@
-name: /om2/user/sitzmann/lf
+name: lfn
 channels:
   - pytorch
   - plotly
@@ -28,7 +28,7 @@ dependencies:
   - configargparse=1.2.3=py_0
   - contextvars=2.4=py_0
   - cryptography=3.4.6=py36hb60f036_0
-  - cudatoolkit=11.1.1=h6406543_8
+  - cudatoolkit=10.1.243=h036e899_6
   - curl=7.77.0=hea6ffbf_0
   - cycler=0.10.0=py36_0
   - cytoolz=0.11.0=py36h7b6447c_0
@@ -153,7 +153,7 @@ dependencies:
   - python=3.6.13=hdb3f193_0
   - python-dateutil=2.8.1=pyhd3eb1b0_0
   - python_abi=3.6=1_cp36m
-  - pytorch=1.8.0=py3.6_cuda11.1_cudnn8.0.5_0
+  - pytorch=1.8.0=py3.6_cuda10.1_cudnn7.6.3_0
   - pytz=2021.1=pyhd8ed1ab_0
   - pywavelets=1.1.1=py36h7b6447c_2
   - pyyaml=5.4.1=py36h27cfd23_1
@@ -218,4 +218,8 @@ dependencies:
     - tensorboard-plugin-wit==1.8.0
     - urllib3==1.26.3
     - werkzeug==1.0.1
-prefix: /om2/user/sitzmann/lf
+prefix: lfn
+
+# replaces w/ cuda 10.1
+# - cudatoolkit=11.1.1=h6406543_8
+# - pytorch=1.8.0=py3.6_cuda11.1_cudnn8.0.5_0

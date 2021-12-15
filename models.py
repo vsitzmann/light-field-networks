@@ -70,7 +70,7 @@ class LightFieldModel(nn.Module):
         print(self.phi)
         print(np.sum(np.prod(param.shape) for param in self.phi.parameters()))
 
-    def get_light_field_function(self, z=None):
+    def get_light_field_function(self, z=None): # can copy
         if self.fit_single:
             phi = self.phi
         elif self.conditioning in ['hyper', 'low_rank']:
@@ -83,14 +83,14 @@ class LightFieldModel(nn.Module):
                 return self.phi(torch.cat((z_rep, x), dim=-1))
         return phi
 
-    def get_query_cam(self, input):
+    def get_query_cam(self, input): # can copy
         query_dict = input['query']
         pose = util.flatten_first_two(query_dict["cam2world"])
         intrinsics = util.flatten_first_two(query_dict["intrinsics"])
         uv = util.flatten_first_two(query_dict["uv"].float())
         return pose, intrinsics, uv
 
-    def forward(self, input, val=False, compute_depth=False, timing=False):
+    def forward(self, input, val=False, compute_depth=False, timing=False): # adapt SRN forward pass to this interface
         out_dict = {}
         query = input['query']
         b, n_ctxt = query["uv"].shape[:2]
@@ -106,7 +106,8 @@ class LightFieldModel(nn.Module):
             z = z.view(b * n_qry, self.latent_dim)
 
         query_pose, query_intrinsics, query_uv = self.get_query_cam(input)
-
+        
+        # this chunk down will be SRN forward pass
         if self.parameterization == 'plucker':
             light_field_coords = geometry.plucker_embedding(query_pose, query_uv, query_intrinsics)
         else:
