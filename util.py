@@ -1,12 +1,97 @@
-import matplotlib.colors as colors
-import diff_operators
 import torch.nn.functional as F
 import geometry
-import os, struct, math
+import os
 import numpy as np
 import torch
-from glob import glob
 import collections
+
+
+def parse_intrinsics_hdf5(raw_data, trgt_sidelength=None, invert_y=False):
+    s = raw_data[...].tostring()
+    s = s.decode('utf-8')
+
+    lines = s.split('\n')
+
+    f, cx, cy, _ = map(float, lines[0].split())
+    grid_barycenter = torch.Tensor(list(map(float, lines[1].split())))
+    height, width = map(float, lines[3].split())
+
+    try:
+        world2cam_poses = int(lines[4])
+    except ValueError:
+        world2cam_poses = None
+
+    if world2cam_poses is None:
+        world2cam_poses = False
+
+    world2cam_poses = bool(world2cam_poses)
+
+    if trgt_sidelength is not None:
+        cx = cx/width * trgt_sidelength
+        cy = cy/height * trgt_sidelength
+        f = trgt_sidelength / height * f
+
+    fx = f
+    if invert_y:
+        fy = -f
+    else:
+        fy = f
+
+    full_intrinsic = np.array([[fx, 0., cx, 0.],
+                               [0., fy, cy, 0],
+                               [0., 0, 1, 0],
+                               [0, 0, 0, 1]])
+
+    return full_intrinsic, grid_barycenter, world2cam_poses
+
+
+def light_field_point_cloud(light_field_fn, num_samples=64**2, outlier_rejection=True):
+    dirs = torch.normal(torch.zeros(1, num_samples, 3), torch.ones(1, num_samples, 3)).cuda()
+    dirs = F.normalize(dirs, dim=-1)
+
+    x = (torch.rand_like(dirs) - 0.5) * 2
+
+    D = 1
+    x_prim = x + D * dirs
+
+    st = torch.zeros(1, num_samples, 2).requires_grad_(True).cuda()
+    max_norm_dcdst = torch.ones_like(st) * 0
+    dcdsts = []
+    for i in range(5):
+        d_prim = torch.normal(torch.zeros(1, num_samples, 3), torch.ones(1, num_samples, 3)).cuda()
+        d_prim = F.normalize(d_prim, dim=-1)
+
+        a = x + st[..., :1] * d_prim
+        b = x_prim + st[..., 1:] * d_prim
+        v_dir = b - a
+        v_mom = torch.cross(a, b, dim=-1)
+        v_norm = torch.cat((v_dir, v_mom), dim=-1) / v_dir.norm(dim=-1, keepdim=True)
+
+        with torch.enable_grad():
+            c = light_field_fn(v_norm)
+            dcdst = gradient(c, st)
+            dcdsts.append(dcdst)
+            criterion = max_norm_dcdst.norm(dim=-1, keepdim=True)<dcdst.norm(dim=-1, keepdim=True)
+            max_norm_dcdst = torch.where(criterion, dcdst, max_norm_dcdst)
+
+    dcdsts = torch.stack(dcdsts, dim=0)
+    dcdt = dcdsts[..., 1:]
+    dcds = dcdsts[..., :1]
+
+    d = D * dcdt / (dcds + dcdt)
+    mask = d.std(dim=0) > 1e-2
+    d = d.mean(0)
+    d[mask] = 0.
+    d[max_norm_dcdst.norm(dim=-1)<1] = 0.
+
+    return {'depth':d, 'points':x + d * dirs, 'colors':c}
+
+
+def gradient(y, x, grad_outputs=None, create_graph=True):
+    if grad_outputs is None:
+        grad_outputs = torch.ones_like(y)
+    grad = torch.autograd.grad(y, [x], grad_outputs=grad_outputs, create_graph=create_graph)[0]
+    return grad
 
 
 def parse_comma_separated_integers(string):
@@ -163,7 +248,7 @@ def light_field_depth_map(plucker_coords, cam2world, light_field_fn):
 
         with torch.enable_grad():
             c = light_field_fn(v_norm)
-            dcdst = diff_operators.gradient(c, st, create_graph=False)
+            dcdst = gradient(c, st, create_graph=False)
             dcdsts.append(dcdst)
             del dcdst
             del c

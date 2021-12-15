@@ -3,7 +3,6 @@ import sys
 import os
 sys.path.append( os.path.dirname( os.path.dirname( os.path.abspath(__file__) ) ) )
 
-from glob import glob
 import torch
 torch.multiprocessing.set_sharing_strategy('file_system')
 import torch.distributed as dist

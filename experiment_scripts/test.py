@@ -12,16 +12,12 @@ import skimage.measure
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import training
 import multiclass_dataio
 import hdf5_dataio
 
 from collections import defaultdict
-from glob import glob
 import cv2
-import conv_modules
 import torch
-from torch.utils.data import DataLoader
 import models
 import configargparse
 import config

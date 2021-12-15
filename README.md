@@ -17,7 +17,7 @@ This is the official implementation of the paper "Light Field Networks: Neural S
 You can set up a conda environment with all dependencies like so:
 ```
 conda env create -f environment.yml
-conda activate siren
+conda activate lf
 ```
 
 ## High-Level structure

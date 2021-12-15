@@ -58,9 +58,8 @@ def multigpu_train(gpu, opt, cache):
         train_dataset = multiclass_dataio.SceneClassDataset(num_context=0, num_trgt=opt.num_trgt,
                                                             root_dir=opt.data_root, query_sparsity=query_sparsity,
                                                             img_sidelength=sidelength, vary_context_number=True, cache=cache,
-                                                            specific_observation_idcs=[0, 12] if opt.reconstruct else None,
                                                             max_num_instances=opt.max_num_instances,
-                                                            dataset_type='test' if opt.reconstruct else 'train')
+                                                            dataset_type='train')
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
                                   drop_last=True, num_workers=0)
 
@@ -80,9 +79,7 @@ def multigpu_train(gpu, opt, cache):
     if opt.checkpoint_path is not None:
         print(f"Loading weights from {opt.checkpoint_path}...")
         state_dict = torch.load(opt.checkpoint_path)
-        if opt.reconstruct:
-            state_dict['latent_codes.weight'] = torch.zeros_like(state_dict['latent_codes.weight'])
-        model.load_state_dict(state_dict, strict=not opt.reconstruct)
+        model.load_state_dict(state_dict)
 
     if opt.gpus > 1:
         sync_model(model)
