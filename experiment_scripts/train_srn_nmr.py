@@ -90,7 +90,8 @@ def multigpu_train(gpu, opt, cache):
     loss_fn = val_loss_fn = loss_functions.LFLoss(1)
 
     training.multiscale_training(model=model, dataloader_callback=create_dataloader_callback,
-                                 dataloader_iters=(100000, 100000), dataloader_params=((64, opt.batch_size, 32*32), (64, opt.batch_size, None), ),
+                                 dataloader_iters=(100000, 100000), dataloader_params=((64, opt.batch_size, 32*32), 
+                                                                                       (64, opt.batch_size, None)),
                                  epochs=opt.num_epochs, lr=opt.lr, steps_til_summary=opt.steps_til_summary,
                                  epochs_til_checkpoint=opt.epochs_til_ckpt,
                                  model_dir=root_path, loss_fn=loss_fn, val_loss_fn=val_loss_fn,
