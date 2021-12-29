@@ -1,5 +1,7 @@
-# Light Field Networks
-### [Project Page](https://vsitzmann.github.io/lfns) | [Paper](https://arxiv.org/abs/2106.02634)  | [Data](https://drive.google.com/drive/folders/15u6WD0zSBXzu8jZBF-Sn5n01F2HSxFCp?usp=sharing) | [Pretrained Models](https://drive.google.com/drive/folders/15u6WD0zSBXzu8jZBF-Sn5n01F2HSxFCp?usp=sharing)
+# Light Field Networks (LFNs) and Scene Representation Networks (SRNs)
+### [LFNs Project Page](https://vsitzmann.github.io/lfns) | [LFNs Paper](https://arxiv.org/abs/2106.02634) | [Pretrained LFNs](https://drive.google.com/drive/folders/15u6WD0zSBXzu8jZBF-Sn5n01F2HSxFCp?usp=sharing)
+### [SRNs Project Page](https://vsitzmann.github.io/srns) | [Paper](https://papers.nips.cc/paper/8396-scene-representation-networks-continuous-3d-structure-aware-neural-scene-representations)
+### [Data](https://drive.google.com/drive/folders/15u6WD0zSBXzu8jZBF-Sn5n01F2HSxFCp?usp=sharing) | [Pretrained Models](https://drive.google.com/drive/folders/15u6WD0zSBXzu8jZBF-Sn5n01F2HSxFCp?usp=sharing)
 
 [Vincent Sitzmann](https://vsitzmann.github.io/)\*,
 [Semon Rezchikov](https://math.columbia.edu/~skr/)\*,
@@ -8,10 +10,9 @@
 [Frédo Durand]()<br>
 MIT, \*denotes equal contribution
 
-This is the official implementation of the paper "Light Field Networks: Neural Scene Representations with Single-Evaluation Rendering".
+This branch implements *both* Scene Representation Networks (SRNs) *and* Light Field Networks (LFNs) in the same framework.
 
-[![lfns_video](https://img.youtube.com/vi/x3sSreTNFw4/0.jpg)](https://www.youtube.com/watch?v=x3sSreTNFw4&feature=emb_imp_woyt)
-
+You can train *either* model using the train_*.py files in experiment_scripts/.
 
 ## Get started
 You can set up a conda environment with all dependencies like so:
@@ -89,16 +90,27 @@ i.e., they denote the matrix transform that transforms camera coordinates to wor
 If you find our work useful in your research, please cite:
 ```
 @inproceedings{sitzmann2021lfns,
-               author = {Sitzmann, Vincent
-                         and Rezchikov, Semon
-                         and Freeman, William T.
-                         and Tenenbaum, Joshua B.
-                         and Durand, Fredo},
-               title = {Light Field Networks: Neural Scene Representations
-                        with Single-Evaluation Rendering},
-               booktitle = {Proc. NeurIPS},
-               year={2021}
-            }
+    author = {Sitzmann, Vincent
+              and Rezchikov, Semon
+              and Freeman, William T.
+              and Tenenbaum, Joshua B.
+              and Durand, Fredo},
+    title = {Light Field Networks: Neural Scene Representations
+             with Single-Evaluation Rendering},
+    booktitle = {Proc. NeurIPS},
+    year={2021}
+}
+```
+
+```
+@inproceedings{sitzmann2019srns,
+    author = {Sitzmann, Vincent
+              and Zollh{\"o}fer, Michael
+              and Wetzstein, Gordon},
+    title = {Scene Representation Networks: Continuous 3D-Structure-Aware Neural Scene Representations},
+    booktitle = {Proc. NeurIPS},
+    year={2019}
+}
 ```
 
 ### Contact
