@@ -12,6 +12,12 @@ This is the official implementation of the paper "Light Field Networks: Neural S
 
 [![lfns_video](https://img.youtube.com/vi/x3sSreTNFw4/0.jpg)](https://www.youtube.com/watch?v=x3sSreTNFw4&feature=emb_imp_woyt)
 
+### Train Scene Representation Networks (NeurIPS 2019) with the same codebase!
+In the branch "scene_rep_nets", we re-implemented our 2019 NeurIPS paper [Scene Representation Networks](https://www.vincentsitzmann.com/srns/), wich first
+proposed differentiable rendering of 3D neural fields using a sphere-tracing based renderer, enabling prior-based 3D 
+reconstruction from only a single image observation. You can train
+both SRNs and LFNs using this codebase (all the instructions below also apply to SRNs)! Thanks to my MIT colleague 
+Thomas O'Connell for helping with the SRNs re-implementation!
 
 ## Get started
 You can set up a conda environment with all dependencies like so:
@@ -85,6 +91,23 @@ the X-axis points right, and the Z-axis points into the image plane. Camera pose
 i.e., they denote the matrix transform that transforms camera coordinates to world coordinates.
 
 ## Misc
+### Related Projects & Reading
+In my [GitHub reading list on neural fields](https://github.com/vsitzmann/awesome-implicit-representations), I give an 
+overview over prior work on neural fields & neural implicit representations.
+
+In our CVPR 2018 paper [DeepVoxels](https://www.vincentsitzmann.com/deepvoxels/), we proposed a differentiable renderer
+for overfitting a single voxel-grid based neural scene representations on a single scene, enabling photorealistic novel view synthesis
+with high-frequency detail and view-dependent effects.
+![Alt Text](https://www.vincentsitzmann.com/deepvoxels/img/fountain_stacked.mp4.gif)
+![Alt Text](https://www.vincentsitzmann.com/deepvoxels/img/globe_stacked.mp4.gif)
+
+In our NeurIPS 2019 paper [Scene Representation Networks](https://www.vincentsitzmann.com/srns/), we proposed 
+to leverage a 3D MLP / neural field / neural implicit based neural scene representation that could be trained via differentiable rendering.
+
+In our NeurIPS 2021 paper [Neural Implicit Representations with Periodic Activation Functions](https://www.vincentsitzmann.com/siren/), 
+we proposed periodic nonlinearities for neural fields / neural implicit representations that can both fit high-frequency signals,
+and can be used to parameterize signals with non-trivial higher-order derivatives.
+
 ### Citation
 If you find our work useful in your research, please cite:
 ```
