@@ -4,6 +4,7 @@ matplotlib.use('Agg')
 import torch
 import util
 import torchvision
+import math
 
 
 def img_summaries(model, model_input, ground_truth, loss_summaries, model_output, writer, iter, prefix="", img_shape=None):
@@ -29,6 +30,7 @@ def img_summaries(model, model_input, ground_truth, loss_summaries, model_output
 
         output_vs_gt = torch.cat((predictions, trgt_imgs), dim=0)
         output_vs_gt = util.lin2img(output_vs_gt, image_resolution=img_shape)
+        print(output_vs_gt.size(),flush=True)
         writer.add_image(prefix + "output_vs_gt",
                          torchvision.utils.make_grid(output_vs_gt, scale_each=False,
                                                      normalize=True).cpu().detach().numpy(),
@@ -51,6 +53,10 @@ def img_summaries(model, model_input, ground_truth, loss_summaries, model_output
                          iter)
         
         normal_plot = util.lin2img(normal.permute(0, -1, 1))
+        ns = normal.size()
+        normal.resize_(ns[0], ns[1], int(math.sqrt(ns[2])), int(math.sqrt(ns[2])))
+        print('SUMMARY', flush=True)
+        print(normal.size(), flush=True)
         writer.add_image(prefix + "pred_normals",
                          torchvision.utils.make_grid(normal,
                                                      scale_each=True,

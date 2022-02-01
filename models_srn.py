@@ -116,13 +116,6 @@ class SRNsModel(nn.Module):
         self.fit_single = fit_single
         self.conditioning = conditioning
         self.sphere_trace_steps = tracing_steps
-        
-        # from SRN repo
-#         self.phi_layers = 4  # includes the in and out layers
-#         self.rendering_layers = 5  # includes the in and out layers
-#         self.sphere_trace_steps = tracing_steps
-#         self.freeze_networks = freeze_networks
-#         self.fit_single_srn = fit_single_srn
                 
         if self.fit_single or conditioning in ['hyper', 'low_rank']:
             if network == 'relu':
@@ -240,6 +233,8 @@ class SRNsModel(nn.Module):
             z_cam = depth_maps.view(batch_size, -1)
 
             normals = geometry.compute_normal_map(x_img=x_cam, y_img=y_cam, z=z_cam, intrinsics=intrinsics)
+            print(normals.size(), flush=True)
+            print(normals.view(b, n_qry, 3, -1).size(), flush=True)
             out_dict['normals'] = normals.view(b, n_qry, 3, -1) # TODO does not work with varying numbers of query work
         out_dict['rgb'] = novel_views.view(b, n_qry, -1, 3)
         out_dict['depth'] = depth_maps.view(b, n_qry, -1, 1)
@@ -260,8 +255,8 @@ class SRNAutoDecoder(SRNsModel):
 
 
 class SRNEncoder(SRNsModel):
-    def __init__(self, latent_dim, num_instances, network='relu', conditioning='hyper'):
-        super().__init__(latent_dim, conditioning=conditioning, network=network)
+    def __init__(self, latent_dim, num_instances, conditioning='hyper'):
+        super().__init__(latent_dim, conditioning=conditioning)
         self.encoder = conv_modules.Resnet18(c_dim=latent_dim)
 
     def get_z(self, input, val=False):

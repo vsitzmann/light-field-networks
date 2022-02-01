@@ -83,10 +83,10 @@ def multigpu_train(gpu, opt, cache):
     num_instances = multiclass_dataio.get_num_instances(opt.data_root, 'train')
     if opt.inference_type == 'autodecoder':
         model = models_srn.SRNAutoDecoder(latent_dim=256, num_instances=num_instances,
-                                     network=opt.network, conditioning=opt.conditioning).cuda()
+                                          network=opt.network, conditioning=opt.conditioning).cuda()
     if opt.inference_type == 'amortized':
         model = models_srn.SRNEncoder(latent_dim=256, num_instances=num_instances,
-                                          network=opt.network, conditioning=opt.conditioning).cuda()
+                                      conditioning=opt.conditioning).cuda()
 
     if opt.checkpoint_path is not None:
         print(f"Loading weights from {opt.checkpoint_path}...")
@@ -102,8 +102,7 @@ def multigpu_train(gpu, opt, cache):
     loss_fn = val_loss_fn = loss_functions.LFLoss(1)
 
     training.multiscale_training(model=model, dataloader_callback=create_dataloader_callback,
-                                 dataloader_iters=(100000, 100000), dataloader_params=((64, opt.batch_size, 32*32), 
-                                                                                       (64, opt.batch_size, None)),
+                                 dataloader_iters=(100000, ), dataloader_params=((64, opt.batch_size, None), ),
                                  epochs=opt.num_epochs, lr=opt.lr, steps_til_summary=opt.steps_til_summary,
                                  epochs_til_checkpoint=opt.epochs_til_ckpt,
                                  model_dir=root_path, loss_fn=loss_fn, val_loss_fn=val_loss_fn,

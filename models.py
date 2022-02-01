@@ -174,7 +174,7 @@ class LFAutoDecoder(LightFieldModel):
 
 class LFEncoder(LightFieldModel):
     def __init__(self, latent_dim, num_instances, parameterization='plucker', conditioning='hyper'):
-        super().__init__(latent_dim, parameterization, conditioning='low_rank')
+        super().__init__(latent_dim, parameterization, conditioning=conditioning)
         self.num_instances = num_instances
         self.encoder = conv_modules.Resnet18(c_dim=latent_dim)
 
